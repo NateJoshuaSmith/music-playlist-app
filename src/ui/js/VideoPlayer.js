@@ -1,6 +1,5 @@
 // VideoPlayer.js
 import React from "react";
-import "./VideoList";
 
 const VideoPlayer = ({ videoId }) => {
   const videoUrl = `https://www.youtube.com/embed/${videoId}`;
