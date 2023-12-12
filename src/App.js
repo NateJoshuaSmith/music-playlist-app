@@ -4,9 +4,8 @@ import VideoList from "./ui/js/VideoList";
 function App() {
   return (
     <div>
-      <h1>YouTube Video List</h1>
+      <SpotifyAccessToken />
       <VideoList />
-      {/* <SpotifyAccessToken /> */}
     </div>
   );
 }
