@@ -1,21 +1,77 @@
 const express = require("express");
-const path = require("path");
+const bodyParser = require("body-parser");
+const querystring = require("querystring");
+const axios = require("axios");
+
 const app = express();
-const PORT = process.env.PORT || 5500;
+const port = 5500; // Use any available port
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, "../my-react-app/build")));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
-// API endpoint
-app.get("/callback", (req, res) => {
-  res.json({ message: "Hello from the server!" });
+const clientId = "164dceed83f04c21b21d198d94443ba9";
+const clientSecret = "1543f6f5bd4c4b3f8dcd751a6ac18467";
+const redirectUri = "http://localhost:5500/callback"; // Adjust as needed
+
+// Step 1: Redirect to Spotify for Authorization
+app.get("/login", (req, res) => {
+  const scope = "user-read-private user-read-email"; // Add the required scopes
+
+  res.redirect(
+    `https://accounts.spotify.com/authorize?${querystring.stringify({
+      response_type: "code",
+      client_id: clientId,
+      scope,
+      redirect_uri: redirectUri,
+    })}`
+  );
 });
 
-// Catch-all route to serve 'index.html' for any other route
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../my-react-app/build/index.html"));
+// Step 2: Handle the Callback from Spotify
+app.get("/callback", async (req, res) => {
+  const code = req.query.code || null;
+
+  if (!code) {
+    res.status(400).send("Error: Missing authorization code");
+    return;
+  }
+
+  // Step 3: Exchange the authorization code for an access token
+  const tokenEndpoint = "https://accounts.spotify.com/api/token";
+  const authOptions = {
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  };
+
+  const tokenParams = {
+    code,
+    redirect_uri: redirectUri,
+    grant_type: "authorization_code",
+    client_id: clientId,
+    client_secret: clientSecret,
+  };
+
+  try {
+    const tokenResponse = await axios.post(
+      tokenEndpoint,
+      querystring.stringify(tokenParams),
+      authOptions
+    );
+    const accessToken = tokenResponse.data.access_token;
+    const refreshToken = tokenResponse.data.refresh_token;
+
+    // In a real application, you would typically save these tokens securely
+    console.log("Access Token:", accessToken);
+    console.log("Refresh Token:", refreshToken);
+
+    res.send("Authentication successful! Check the server console for tokens.");
+  } catch (error) {
+    console.error("Error exchanging code for token:", error.message);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
