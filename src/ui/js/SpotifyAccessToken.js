@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import YoutubeVideoPlayer from "./YoutubePlayer";
 
 const SpotifyAccessToken = () => {
+  // <YoutubeVideoPlayer videoId={videoId} />;
   return (
     <div>
       <h1>Spotify Auth Example</h1>

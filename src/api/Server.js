@@ -2,10 +2,17 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const querystring = require("querystring");
 const axios = require("axios");
+const cors = require("cors");
 
 const app = express();
 const port = 5500; // Use any available port
 
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -70,6 +77,27 @@ app.get("/callback", async (req, res) => {
     console.error("Error exchanging code for token:", error.message);
     res.status(500).send("Internal Server Error");
   }
+});
+
+app.post("/searchYoutube", (req, res) => {
+  const apiKey = "AIzaSyDnHvs7XhK6610pt4UktfmyK6obkcCFoow";
+  const searchTerm = req.body.searchTerm;
+  const requestUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchTerm}&type=video&key=${apiKey}`;
+  console.log(searchTerm);
+
+  // Make the axios call
+  axios
+    .get(requestUrl)
+    .then((response) => {
+      // Handle the response data
+      const videoId = response.data.items[0].id.videoId;
+      res.send(response.data.items[0].id.videoId);
+    })
+    .catch((error) => {
+      // Handle errors
+      console.error("Error fetching data from YouTube API:", error.message);
+      res.status(500).json({ error: "Internal Server Error" });
+    });
 });
 
 app.listen(port, () => {
